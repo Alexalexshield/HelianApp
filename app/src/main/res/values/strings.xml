@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">HelianApp</string>
     <string name="action_settings">Settings</string>
-    <string name="bluetooth_settings">BlueTooth</string>
+    <string name="bluetooth_settings">Bluetooth</string>
     <string name="calibration_settings">Calibration</string>
     <string name="info_settings">Info</string>>
 
@@ -20,4 +20,12 @@
     <string name="quickSearch"> Quick Search</string>
     <string name="IDsearch">ID search</string>
     <string name="ok">OK</string>
+
+    <string name="HelianTransponderName">TRANSPONDER</string>
+
+    <!--    BLE strings-->
+    <string name="screen_title_main">Device List</string>
+    <string name="send_msg">Send msg</string>
+    <string name="connect">Connect</string>
+    <string name="connect_ble">Connect BLE</string>
 </resources>

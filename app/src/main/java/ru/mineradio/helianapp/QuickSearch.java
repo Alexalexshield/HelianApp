@@ -1,8 +1,11 @@
 package ru.mineradio.helianapp;
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -11,9 +14,8 @@ import com.jjoe64.graphview.LegendRenderer;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
-import java.util.Random;
-
 import androidx.appcompat.app.AppCompatActivity;
+import ru.mineradio.helianapp.bluetooth.BleAdapterService;
 
 
 public class QuickSearch  extends AppCompatActivity {
@@ -23,7 +25,9 @@ public class QuickSearch  extends AppCompatActivity {
     private LineGraphSeries<DataPoint> mSeriesX;
     private LineGraphSeries<DataPoint> mSeriesY;
     private LineGraphSeries<DataPoint> mSeriesZ;
-    private double graphLastXValue = 5d;
+    private double graphLastXValue = 1d;
+    private int graphLastCursorPosition =0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,42 +82,141 @@ public class QuickSearch  extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        mTimer1 = new Runnable() {
+//        String json ="{\"siski\"}";
+//        byte[] al = json.getBytes();
+//         bluetooth_le_adapter.writeCharacteristic(BleAdapterService.IMMEDIATE_ALERT_SERVICE_UUID,
+//                BleAdapterService.SPP_COMMAND_SEND, al);
+
+        //TODO PUT GENERATE DATA in BLUETOOTH
+        @SuppressLint("HandlerLeak")
+
+        Handler message_handler = new Handler() {
             @Override
-            public void run() {
-                graphLastXValue += 1d;
-                mSeriesX.appendData(new DataPoint(graphLastXValue, getRandom()), true, 40);
-                mSeriesY.appendData(new DataPoint(graphLastXValue, getRandom()), true, 40);
-                mSeriesZ.appendData(new DataPoint(graphLastXValue, getRandom()), true, 40);
-                mHandler.postDelayed(this, 200);
+            public void handleMessage(Message msg) {
+                Bundle bundle;
+                String service_uuid = "";
+                String characteristic_uuid = "";
+                byte[] b = null;
+
+                switch (msg.what) {
+                    case BleAdapterService.MESSAGE:
+                        bundle = msg.getData();
+                        String text = bundle.getString(BleAdapterService.PARCEL_TEXT);
+                        Log.d("QUICKSEARCH", "GATT_CHARACTERISTIC_WRITTEN set to: " + text);
+                        //showMsg(text);
+                        break;
+
+                    case BleAdapterService.GATT_DISCONNECT:
+                        // we're disconnected
+
+                        Log.d("QUICKSEARCH", "DISCONNECTED");
+//                        showMsg("DISCONNECTED");
+                        break;
+
+                    case BleAdapterService.GATT_CHARACTERISTIC_READ:
+                        bundle = msg.getData();
+                        Log.d("QUICKSEARCH",
+                                "Service=" + bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
+                                        + " Characteristic="
+                                        + bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase());
+                        if (bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase()
+                                .equals(BleAdapterService.SPP_COMMAND_SEND)
+                                && bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
+                                .equals(BleAdapterService.SPP_SERVICE_UUID)) {
+                        }
+                        break;
+                    case BleAdapterService.GATT_CHARACTERISTIC_WRITTEN:
+                        bundle = msg.getData();
+                        Log.d("QUICKSEARCH",
+                                "Service=" + bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
+                                        + " Characteristic="
+                                        + bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase());
+                        if (bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase()
+                                .equals(BleAdapterService.SPP_COMMAND_SEND)
+                                && bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
+                                .equals(BleAdapterService.SPP_SERVICE_UUID)) {
+                            b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
+                            Log.d("QUICKSEARCH", "GATT_CHARACTERISTIC_WRITTEN set to: " + byteArrayAsHexString(b));
+                        }
+                        break;
+                    case BleAdapterService.NOTIFICATION_OR_INDICATION_RECEIVED:
+                        bundle = msg.getData();
+                        service_uuid = bundle.getString(BleAdapterService.PARCEL_SERVICE_UUID);
+                        characteristic_uuid = bundle.getString(BleAdapterService.PARCEL_CHARACTERISTIC_UUID);
+                        b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
+                        Log.d("QUICKSEARCH", byteArrayAsHexString(b));
+                }
             }
         };
-        mHandler.postDelayed(mTimer1, 1000);
+
+//        mTimer1 = new Runnable() {
+//            @Override
+//            public void run() {
+//                double[] buffX;
+//                double[] buffY;
+//                double[] buffZ;
+//                if (true){
+//                    buffX = generateData();
+//                    buffY = generateData();
+//                    buffZ = generateData();
+//                }
+//
+//
+//                graphLastXValue += 1d;
+//                mSeriesX.appendData(new DataPoint(graphLastXValue, buffX[graphLastCursorPosition]), true, 40);
+//                mSeriesY.appendData(new DataPoint(graphLastXValue, buffY[graphLastCursorPosition]), true, 40);
+//                mSeriesZ.appendData(new DataPoint(graphLastXValue, buffZ[graphLastCursorPosition]), true, 40);
+//                mHandler.postDelayed(this, 100);
+//
+//                if (graphLastCursorPosition<buffX.length-1) {
+//                    graphLastCursorPosition += 1;
+//                }
+//                else
+//                {
+//                    graphLastCursorPosition = 0;
+//                }
+//
+//            }
+//        };
+//        mHandler.postDelayed(mTimer1, 1000);
     }
 
-    @Override
-    public void onPause() {
-        mHandler.removeCallbacks(mTimer1);
-        super.onPause();
+//    @Override
+//    public void onPause() {
+//        mHandler.removeCallbacks(mTimer1);
+//        super.onPause();
+//    }
+//
+//    private double[] generateData() {
+//        int count = 30;
+//        double[] values= new double[30];
+//        for (int i=0; i<count; i++) {
+//            double x = i;
+//            double f = mRand.nextDouble()*0.15+0.3;
+//            double y = Math.sin(i*f+2) + mRand.nextDouble()*0.3;
+//            double v = y;
+//            values[i] = v;
+//        }
+//        return values;
+//    }
+//
+//    double mLastRandom = 2;
+//    Random mRand = new Random();
+//    private double getRandom() {
+//        return mLastRandom += mRand.nextDouble()*0.5 - 0.25;
+//    }
+public String byteArrayAsHexString(byte[] bytes) {
+    if (bytes == null) {
+        return "";
     }
-
-    private DataPoint[] generateData() {
-        int count = 30;
-        DataPoint[] values = new DataPoint[count];
-        for (int i=0; i<count; i++) {
-            double x = i;
-            double f = mRand.nextDouble()*0.15+0.3;
-            double y = Math.sin(i*f+2) + mRand.nextDouble()*0.3;
-            DataPoint v = new DataPoint(x, y);
-            values[i] = v;
-        }
-        return values;
+    int l = bytes.length;
+    StringBuffer hex = new StringBuffer();
+    for (int i = 0; i < l; i++) {
+        if ((bytes[i] >= 0) & (bytes[i] < 16))
+            hex.append("0");
+        hex.append(Integer.toString(bytes[i] & 0xff, 16).toUpperCase());
     }
-
-    double mLastRandom = 2;
-    Random mRand = new Random();
-    private double getRandom() {
-        return mLastRandom += mRand.nextDouble()*0.5 - 0.25;
-    }
+    return hex.toString();
+}
 
 }

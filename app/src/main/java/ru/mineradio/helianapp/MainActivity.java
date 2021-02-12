@@ -3,14 +3,17 @@ package ru.mineradio.helianapp;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import ru.mineradio.helianapp.ui.BleMainActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,20 +24,43 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        Log.d("debug", "onCreate");
+
         ImageButton quickSearchBut = (ImageButton) findViewById(R.id.quickSearch);
         quickSearchBut.setOnClickListener(quickSearchButList);
 
         ImageButton idSearchBut = (ImageButton) findViewById(R.id.idSearch);
         idSearchBut.setOnClickListener(idSearchButList);
+
+        Log.d("debug", "butt");
+
+        ImageView BtIndicator = (ImageView) findViewById(R.id.btIndicator);
+        BtIndicator.setBackgroundColor(getColor(R.color.colorError));
+
     }
 
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//
+//        //bluetooth indication (compare the name of BT);
+//        String btConnectedName = getString(R.string.HelianTransponderName);
+//        if (Bluetooth.btAdapter.getName().equals(btConnectedName)){
+//            ImageView BtIndicator = (ImageView) findViewById(R.id.btIndicator);
+//            BtIndicator.setBackgroundColor(getColor(R.color.colorError));
+//        }
+//        else
+//        {
+//            ImageView BtIndicator = (ImageView) findViewById(R.id.btIndicator);
+//            BtIndicator.setBackgroundColor(getColor(R.color.colorOk));
+//        }
+//    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -47,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.bluetooth_settings) {
+            Intent intent = new Intent(MainActivity.this, BleMainActivity.class);
+            startActivity(intent);
             return true;
         }
         if (id == R.id.calibration_settings) {
@@ -68,11 +96,8 @@ public class MainActivity extends AppCompatActivity {
             dialog.show();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
-
-
     private View.OnClickListener quickSearchButList = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -80,7 +105,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         }
     };
-
     private View.OnClickListener idSearchButList = new View.OnClickListener() {
         @Override
         public void onClick(View v) {

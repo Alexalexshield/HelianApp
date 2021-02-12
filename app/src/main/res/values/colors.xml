@@ -4,4 +4,6 @@
     <color name="colorPrimaryDark">#A61668</color>
     <color name="colorAccent">#03DAC5</color>
     <color name="MRS_mainTheme">#A61668</color>
+    <color name="colorError">#FF2C2C</color>
+    <color name="colorOk">#4BFF22</color>
 </resources>
