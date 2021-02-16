@@ -1,6 +1,5 @@
 package ru.mineradio.helianapp.ui;
 
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothGattService;
@@ -29,9 +28,7 @@ public class PeripheralControlActivity extends Activity {
     public static final String EXTRA_NAME = "name";
     public static final String EXTRA_ID = "id";
 
-    private String device_name;
     private String device_address;
-    private boolean back_requested = false;
     private BleAdapterService bluetooth_le_adapter;
 
     // empty list for services
@@ -62,6 +59,7 @@ public class PeripheralControlActivity extends Activity {
             String characteristic_uuid = "";
             byte[] b = null;
 
+            boolean back_requested = false;
             switch (msg.what) {
                 case BleAdapterService.MESSAGE:
                     Log.d(Constants.TAG, "MESSAGE");
@@ -70,10 +68,12 @@ public class PeripheralControlActivity extends Activity {
                     showMsg(text);
                     break;
                 case BleAdapterService.GATT_CONNECTED:
-                    ((Button) PeripheralControlActivity.this.findViewById(R.id.connectButton)).setEnabled(false);
-//                ((Button) PeripheralControlActivity.this.findViewById(R.id.sendButton)).setEnabled(true);
+//                    ((Button) PeripheralControlActivity.this.findViewById(R.id.connectButton)).setEnabled(false);
                     showMsg("CONNECTED");
                     bluetooth_le_adapter.discoverServices();
+//TRY TO SOLVE PROBLEM NOTIFICATION
+                    bluetooth_le_adapter.setIndicationsState(BleAdapterService.SPP_SERVICE_UUID, BleAdapterService.COMMAND_NOTIFY, true);
+
                     break;
 
                 case BleAdapterService.GATT_DISCONNECT:
@@ -108,8 +108,13 @@ public class PeripheralControlActivity extends Activity {
 
                         ((Button) PeripheralControlActivity.this.findViewById(R.id.sendButton)).setEnabled(true);
 
-                        bluetooth_le_adapter.readCharacteristic(BleAdapterService.SPP_SERVICE_UUID,
-                                BleAdapterService.SPP_COMMAND_SEND);
+                        if (bluetooth_le_adapter.setIndicationsState(BleAdapterService.SPP_SERVICE_UUID,
+                                BleAdapterService.COMMAND_NOTIFY, true)) {
+                        } else {
+                            showMsg("Failed to inform SPP monitoring has been enabled");
+                        }
+//                        bluetooth_le_adapter.readCharacteristic(BleAdapterService.SPP_SERVICE_UUID,
+//                                BleAdapterService.SPP_COMMAND_SEND);
 
                     } else {
                         showMsg("Device does not have expected GATT services");
@@ -151,7 +156,10 @@ public class PeripheralControlActivity extends Activity {
                     service_uuid = bundle.getString(BleAdapterService.PARCEL_SERVICE_UUID);
                     characteristic_uuid = bundle.getString(BleAdapterService.PARCEL_CHARACTERISTIC_UUID);
                     b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
-                    Log.d(Constants.TAG, byteArrayAsHexString(b));
+//                    showMsg(byteArrayAsHexString(b));
+                    showMsg(new String(b));
+                    //Log.d(Constants.TAG, byteArrayAsHexString(b));
+                    Log.d(Constants.TAG, new String(b));
             }
         }
     };
@@ -162,7 +170,9 @@ public class PeripheralControlActivity extends Activity {
     }
 
     public void onSend(View view) {
-        String json ="{\"freq\":8000,\"command\":0,  \"modulation\":\"ASK\",\"flag_on_air\":1}";
+//        String json ="{\"freq\":8000,\"command\":0,  \"modulation\":\"ASK\",\"flag_on_air\":1}";
+        String json ="{\"flag_on_air\":1}";
+        //todo make extension for long packet of data
         byte[] al = json.getBytes();
         bluetooth_le_adapter.writeCharacteristic(BleAdapterService.SPP_SERVICE_UUID,
                 BleAdapterService.SPP_COMMAND_SEND, al);
@@ -171,18 +181,19 @@ public class PeripheralControlActivity extends Activity {
 //        startActivity(intent);
     }
 
-    public void onBackPressed() {
-        Log.d(Constants.TAG, "onBackPressed");
-        back_requested = true;
-        if (bluetooth_le_adapter.isConnected()) {
-            try {
-                bluetooth_le_adapter.disconnect();
-            } catch (Exception e) {
-            }
-        } else {
-            finish();
-        }
-    }
+//    public void onBackPressed() {
+//        Log.d(Constants.TAG, "onBackPressed");
+//        back_requested = true;
+//        if (bluetooth_le_adapter.isConnected()) {
+//            try {
+//                bluetooth_le_adapter.disconnect();
+//            } catch (Exception e) {
+//                Log.d("VLF","BackPressedException");
+//            }
+//        } else {
+//            finish();
+//        }
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -191,9 +202,8 @@ public class PeripheralControlActivity extends Activity {
 
         // read intent data
         final Intent intent = getIntent();
-        device_name = intent.getStringExtra(EXTRA_NAME);
+        String device_name = intent.getStringExtra(EXTRA_NAME);
         device_address = intent.getStringExtra(EXTRA_ID);
-
         // show the device name
         ((TextView) this.findViewById(R.id.nameTextView))
                 .setText("Device : " + device_name + " [" + device_address + "]");
@@ -204,7 +214,7 @@ public class PeripheralControlActivity extends Activity {
         Intent gattServiceIntent = new Intent(this, BleAdapterService.class);
         bindService(gattServiceIntent, service_connection, BIND_AUTO_CREATE);
 
-
+//todo remove the listView from onCreate
         // get instance of ListView
         ListView listView = (ListView) PeripheralControlActivity.this.findViewById(R.id.characteristicsListView);
         adapterList = new ArrayAdapter<>(this,
@@ -238,7 +248,6 @@ public class PeripheralControlActivity extends Activity {
             if (bluetooth_le_adapter.connect(device_address)) {
 
                 ((Button) PeripheralControlActivity.this.findViewById(R.id.connectButton)).setEnabled(false);
-//                bluetooth_le_adapter.setIndicationsState(BleAdapterService.SPP_SERVICE_UUID, BleAdapterService.SPP_COMMAND_SEND, true);
                 bluetooth_le_adapter.setIndicationsState(BleAdapterService.SPP_SERVICE_UUID, BleAdapterService.COMMAND_NOTIFY, true);
             } else {
                 showMsg("onConnect: failed to connect");
@@ -262,3 +271,5 @@ public class PeripheralControlActivity extends Activity {
         return hex.toString();
     }
 }
+
+

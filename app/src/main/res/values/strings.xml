@@ -28,4 +28,5 @@
     <string name="send_msg">Send msg</string>
     <string name="connect">Connect</string>
     <string name="connect_ble">Connect BLE</string>
+    <string name="unknown_device">unknown device</string>
 </resources>

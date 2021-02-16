@@ -30,8 +30,6 @@ public class BleAdapterService extends Service {
     private BluetoothGatt bluetooth_gatt;
     private BluetoothManager bluetooth_manager;
     private Handler activity_handler = null;
-    private BluetoothDevice device;
-    private BluetoothGattDescriptor descriptor;
     private final IBinder binder = new LocalBinder();
 
     public boolean isConnected() {
@@ -64,8 +62,8 @@ public class BleAdapterService extends Service {
     // service characteristics
     public static String SPP_COMMAND_SEND =   "0000ABF3-0000-1000-8000-00805F9B34FB";
 
-    public static String COMMAND_NOTIFY = "0000ABF4-0000-1000-8000-00805f9b34fb";
-    public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
+    public static String COMMAND_NOTIFY = "0000ABF4-0000-1000-8000-00805F9B34FB";
+    public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805F9B34FB";
 
     public class LocalBinder extends Binder {
         public BleAdapterService getService() {
@@ -114,17 +112,17 @@ public class BleAdapterService extends Service {
     public boolean connect(final String address) {
 
         if (bluetooth_adapter == null || address == null) {
-            sendConsoleMessage("connect: bluetooth_adapter=null");
-            return false;
+                sendConsoleMessage("connect: bluetooth_adapter=null");
+                return false;
         }
 
-        device = bluetooth_adapter.getRemoteDevice(address);
+        BluetoothDevice device = bluetooth_adapter.getRemoteDevice(address);
         if (device == null) {
             sendConsoleMessage("connect: device=null");
             return false;
         }
 
-        bluetooth_gatt = device.connectGatt(this, false, gatt_callback);
+        bluetooth_gatt = device.connectGatt(this, true, gatt_callback);
         return true;
     }
 
@@ -228,16 +226,15 @@ public class BleAdapterService extends Service {
 
         bluetooth_gatt.setCharacteristicNotification(gattChar, enabled);
         // Enable remote notifications
-        descriptor = gattChar.getDescriptor(UUID.fromString(COMMAND_NOTIFY));
+        BluetoothGattDescriptor descriptor = gattChar.getDescriptor(UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
 
         if (enabled) {
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
         } else {
             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
         }
-        boolean ok = bluetooth_gatt.writeDescriptor(descriptor);
 
-        return ok;
+        return bluetooth_gatt.writeDescriptor(descriptor);
     }
 
     private final BluetoothGattCallback gatt_callback = new BluetoothGattCallback() {

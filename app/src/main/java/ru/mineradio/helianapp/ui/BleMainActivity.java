@@ -14,14 +14,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import ru.mineradio.helianapp.Constants;
@@ -47,20 +45,27 @@ public class BleMainActivity extends AppCompatActivity implements ScanResultsCon
         public TextView text;
         public TextView bdaddr;
     }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.ble_activity_main);
-        setButtonText();
-
+//        setButtonText();
         ble_device_list_adapter = new ListAdapter();
 
         ListView listView = (ListView) this.findViewById(R.id.deviceList);
         listView.setAdapter(ble_device_list_adapter);
 
         ble_scanner = new BleScanner(this.getApplicationContext());
+
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissions_granted = false;
+            requestLocationPermission();
+        } else {
+            Log.i(Constants.TAG, "Location permission has already been granted. Starting scanning.");
+            permissions_granted = true;
+        }
+        startScanning();
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -83,29 +88,6 @@ public class BleMainActivity extends AppCompatActivity implements ScanResultsCon
             }
         });
     }
-
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        getMenuInflater().inflate(R.menu.menu_main, menu);
-//        return true;
-//    }
-
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        int id = item.getItemId();
-//
-//        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
-
     @Override
     public void candidateBleDevice(final BluetoothDevice device, byte[] scan_record, int rssi) {
         runOnUiThread(new Runnable() {
@@ -120,7 +102,8 @@ public class BleMainActivity extends AppCompatActivity implements ScanResultsCon
 
     @Override
     public void scanningStarted() {
-        setScanState(true);
+        ble_scanning = true;
+        //        setScanState(true);
     }
 
     @Override
@@ -128,25 +111,7 @@ public class BleMainActivity extends AppCompatActivity implements ScanResultsCon
         if (toast != null) {
             toast.cancel();
         }
-        setScanState(false);
-    }
-
-    private void setButtonText() {
-        String text="";
-        text = Constants.FIND;
-        final String button_text = text;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ((TextView) BleMainActivity.this.findViewById(R.id.scanButton)).setText(button_text);
-            }
-        });
-    }
-
-    private void setScanState(boolean value) {
-        ble_scanning = value;
-        Log.d(Constants.TAG,"Setting scan state to "+value);
-        ((Button) this.findViewById(R.id.scanButton)).setText(value ? Constants.STOP_SCANNING : Constants.FIND);
+        ble_scanning = false;
     }
 
     private class ListAdapter extends BaseAdapter {
@@ -205,37 +170,13 @@ public class BleMainActivity extends AppCompatActivity implements ScanResultsCon
             BluetoothDevice device = ble_devices.get(i);
             String deviceName = device.getName();
             if (deviceName != null && deviceName.length() > 0) {
-                viewHolder.text.setText(deviceName);
-            } else {
-                viewHolder.text.setText("unknown device");
-            }
+            viewHolder.text.setText(deviceName);
+        } else {
+            viewHolder.text.setText(R.string.unknown_device);
+        }
             viewHolder.bdaddr.setText(device.getAddress());
             return view;
-        }
     }
-
-    public void onScan(View view) {
-        if (!ble_scanner.isScanning()) {
-                Log.d(Constants.TAG, "Not currently scanning");
-            device_count=0;
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-                permissions_granted = false;
-                requestLocationPermission();
-            } else {
-                Log.i(Constants.TAG, "Location permission has already been granted. Starting scanning.");
-                permissions_granted = true;
-            }
-//            } else {
-//                // the ACCESS_COARSE_LOCATION permission did not exist before M so....
-//                permissions_granted = true;
-//            }
-            startScanning();
-        } else {
-            Log.d(Constants.TAG, "Already scanning");
-            ble_scanner.stopScanning();
-        }
     }
 
     private void startScanning() {
@@ -253,7 +194,6 @@ public class BleMainActivity extends AppCompatActivity implements ScanResultsCon
             Log.i(Constants.TAG, "Permission to perform Bluetooth scanning was not yet granted");
         }
     }
-
     private void requestLocationPermission() {
         Log.i(Constants.TAG, "Location permission has NOT yet been granted. Requesting permission.");
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)){
@@ -271,26 +211,6 @@ public class BleMainActivity extends AppCompatActivity implements ScanResultsCon
             builder.show();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_LOCATION) {
-            Log.i(Constants.TAG, "Received response for location permission request.");
-            // Check if the only required permission has been granted
-            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Location permission has been granted
-                Log.i(Constants.TAG, "Location permission has now been granted. Scanning.....");
-                permissions_granted = true;
-                if (ble_scanner.isScanning()) {
-                    startScanning();
-                }
-            }else{
-                Log.i(Constants.TAG, "Location permission was NOT granted.");
-            }
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
