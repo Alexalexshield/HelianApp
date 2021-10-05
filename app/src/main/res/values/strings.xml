@@ -20,4 +20,7 @@
     <string name="quickSearch"> Quick Search</string>
     <string name="IDsearch">ID search</string>
     <string name="ok">OK</string>
+    <string name="distance_m"></string>
+    <string name="location_arrow">location arrow</string>
+    <string name="restart">RESTART</string>
 </resources>

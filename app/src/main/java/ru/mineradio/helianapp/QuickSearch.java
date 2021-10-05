@@ -1,8 +1,11 @@
 package ru.mineradio.helianapp;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -25,6 +28,8 @@ public class QuickSearch  extends AppCompatActivity {
     private LineGraphSeries<DataPoint> mSeriesZ;
     private double graphLastXValue = 5d;
 
+    private Random random;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,15 +37,26 @@ public class QuickSearch  extends AppCompatActivity {
 
         initGraph();
 
-        String[] tagsFound = { "Иван", "Марья", "Петр", "Антон", "Даша", "Борис",
-                "Костя", "Игорь", "Анна", "Денис", "Андрей" };
+        String[] tagsFound = { "ID32532", "ID34732", "ID32518", "ID32511", "ID39812", "ID42455","ID42465",};
+        random = new Random();
+
         // find list
-        ListView lvTagIdList = (ListView) findViewById(R.id.tagIdList);
+        final ListView lvTagIdList = (ListView) findViewById(R.id.tagIdList);
         // create adaptor
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, tagsFound);
         //assign the adapter to the list
         lvTagIdList.setAdapter(adapter);
+        lvTagIdList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(QuickSearch.this, Triangulation.class);
+                intent.putExtra("D1", 37);//random.nextInt(15));
+                intent.putExtra("D2", 45);//random.nextInt(15)+2);
+                intent.putExtra("D3", 43);//random.nextInt(15)+2);
+                startActivity(intent);
+            }
+        });
     }
 
 
@@ -72,7 +88,7 @@ public class QuickSearch  extends AppCompatActivity {
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(40);
-        };
+        }
 
     @Override
     public void onResume() {

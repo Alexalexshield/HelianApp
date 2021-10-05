@@ -12,8 +12,7 @@ public class IdSearch  extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.id_search);
 
-        String[] tagsFound = { "Иван", "Марья", "Петр", "Антон", "Даша", "Борис",
-                "Костя", "Игорь", "Анна", "Денис", "Андрей" };
+        String[] tagsFound = { "ID32532", "ID34732", "ID32518", "ID32511", "ID39812"};;
         // find list
         ListView lvTagIdList = (ListView) findViewById(R.id.tagIdList);
         // create adaptor
